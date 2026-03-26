@@ -1,6 +1,73 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     /* ==========================================
+       0. Dynamic Gallery Loading
+       ========================================== */
+    const galleryData = [
+        { category: "reception", image: "images/reception/30 x 20 E-2 copy 2-web.jpg", title: "Event Coverage", featured: true },
+        { category: "reception", image: "images/reception/IMG_3792.JPG.jpeg", title: "Event Coverage" },
+        { category: "reception", image: "images/reception/IMG_3793.JPG.jpeg", title: "Event Coverage" },
+        { category: "reception", image: "images/reception/IMG_3794.JPG.jpeg", title: "Event Coverage" },
+        { category: "reception", image: "images/reception/IMG_4975.JPG.jpeg", title: "Event Coverage" },
+        { category: "reception", image: "images/reception/IMG_4977.JPG.jpeg", title: "Event Coverage" },
+        { category: "reception", image: "images/reception/IMG_4986.JPG.jpeg", title: "Event Coverage" },
+        { category: "reception", image: "images/reception/DSC07273 copy-2.jpg.jpeg", title: "Event Coverage" },
+        { category: "reception", image: "images/reception/27.jpg.jpeg", title: "Event Coverage" },
+        { category: "reception", image: "images/reception/33.jpg.jpeg", title: "Event Coverage" },
+        { category: "wedding", image: "images/wedding/006.jpg.jpeg", title: "Wedding", featured: true },
+        { category: "wedding", image: "images/wedding/IMG_4980.JPG.jpeg", title: "Event Coverage" },
+        { category: "wedding", image: "images/wedding/IMG_4981.JPG.jpeg", title: "Event Coverage" },
+        { category: "wedding", image: "images/wedding/IMG_4989.JPG.jpeg", title: "Event Coverage" },
+        { category: "wedding", image: "images/wedding/IMG_4990.JPG.jpeg", title: "Event Coverage" },
+        { category: "wedding", image: "images/wedding/IMG_4984.JPG.jpeg", title: "Event Coverage" },
+        { category: "wedding", image: "images/wedding/IMG_4983.JPG.jpeg", title: "Event Coverage" },
+        { category: "wedding", image: "images/wedding/001.jpg.jpeg", title: "Event Coverage" },
+        { category: "wedding", image: "images/wedding/13.jpg.jpeg", title: "Event Coverage" },
+        { category: "wedding", image: "images/wedding/img_4991.jpg.jpeg", title: "Event Coverage" },
+        { category: "engagement", image: "images/engagement/IMG_9339.JPG.jpeg", title: "Engagement", featured: true },
+        { category: "engagement", image: "images/engagement/01.jpg.jpeg", title: "Event Coverage" },
+        { category: "engagement", image: "images/engagement/08.jpg.jpeg", title: "Event Coverage" },
+        { category: "engagement", image: "images/engagement/09 sparkle.jpg.jpeg", title: "Event Coverage" },
+        { category: "engagement", image: "images/engagement/IMG_9338.JPG.jpeg", title: "Event Coverage" },
+        { category: "engagement", image: "images/engagement/31 glossy pearl.jpg.jpeg", title: "Event Coverage" },
+        { category: "engagement", image: "images/engagement/IMG_8889.JPG.jpeg", title: "Event Coverage" },
+        { category: "engagement", image: "images/engagement/IMG_8888.JPG.jpeg", title: "Event Coverage" },
+        { category: "engagement", image: "images/engagement/IMG_5033.JPG.jpeg", title: "Event Coverage" },
+        { category: "engagement", image: "images/engagement/IMG_5034.JPG.jpeg", title: "Event Coverage" }
+    ];
+
+    function loadGallery() {
+        const galleryGrid = document.getElementById('gallery-grid');
+        if (!galleryGrid) return;
+        
+        galleryGrid.innerHTML = '';
+        
+        galleryData.forEach(item => { 
+            const dataCategory = item.category;
+            const extraClass = item.featured ? ' featured' : '';
+            const featuredBadge = item.featured ? '\n                            <div class="featured-badge"><i class="fa-solid fa-star"></i> Featured</div>' : '';
+            const categoryLabel = item.category === 'reception' ? 'Reception' : item.category === 'wedding' ? 'Wedding' : 'Engagement';
+            
+            const html = `
+                <div class="gallery-item ${item.category}${extraClass}" data-category="${dataCategory}">
+                    <div class="gallery-img-wrapper">
+                        <img src="${item.image}" alt="${item.title}" loading="lazy">
+                        <div class="gallery-overlay">${featuredBadge}
+                            <h3>${item.title}</h3>
+                            <span class="category-tag">${categoryLabel}</span>
+                            <button class="view-btn" aria-label="View Image"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            galleryGrid.insertAdjacentHTML('beforeend', html);
+        });
+    }
+
+    loadGallery();
+
+    /* ==========================================
        1. Theme Toggle (Dark/Light Mode)
        ========================================== */
     const themeToggleBtn = document.getElementById('theme-toggle');
@@ -36,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const header = document.getElementById('header');
     const sections = document.querySelectorAll('section');
     const navLinksList = document.querySelectorAll('.nav-links a');
+    const filters = document.querySelector('.gallery-filters');
 
     window.addEventListener('scroll', () => {
         // Sticky Header
@@ -43,8 +111,15 @@ document.addEventListener('DOMContentLoaded', () => {
             header.classList.add('scrolled');
         } else {
             header.classList.remove('scrolled');
+            
         }
-
+        if (filters) {
+    if (window.scrollY > 400) {
+        filters.classList.add('sticky-active');
+    } else {
+        filters.classList.remove('sticky-active');
+    }
+}
         // Active Link Highlighting
         let current = '';
         sections.forEach(section => {
@@ -116,10 +191,74 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /* ==========================================
-       5. Portfolio Gallery Filtering
+       5. Portfolio Gallery Filtering & Load More
        ========================================== */
     const filterBtns = document.querySelectorAll('.filter-btn');
     const galleryItems = document.querySelectorAll('.gallery-item');
+    const loadMoreBtn = document.getElementById('load-more-gallery');
+
+    const allCategoriesSequence = ['reception', 'wedding', 'engagement'];
+    let currentVisibleCategoryIndex = 0;
+
+    function applyFilter(filterValue, isInitial = false) {
+        galleryItems.forEach(item => {
+            let shouldShow = false;
+            
+            if (filterValue === 'all') {
+                const itemCategory = item.getAttribute('data-category');
+                const catIndex = allCategoriesSequence.indexOf(itemCategory);
+                if (catIndex !== -1 && catIndex <= currentVisibleCategoryIndex) {
+                    shouldShow = true;
+                }
+            } else {
+                if (item.getAttribute('data-category') === filterValue) {
+                    shouldShow = true;
+                }
+            }
+
+            if (shouldShow) {
+                item.classList.remove('hide');
+                item.style.display = 'block'; // Or inline-block if needed. For Masonry block is fine.
+                if (isInitial) {
+                    item.style.opacity = '1';
+                    item.style.transform = 'scale(1)';
+                } else {
+                    setTimeout(() => {
+                        item.style.opacity = '1';
+                        item.style.transform = 'scale(1)';
+                    }, 50);
+                }
+            } else {
+                if (isInitial) {
+                    item.style.opacity = '0';
+                    item.style.transform = 'scale(0.8)';
+                    item.style.display = 'none';
+                    item.classList.add('hide');
+                } else {
+                    item.style.opacity = '0';
+                    item.style.transform = 'scale(0.8)';
+                    setTimeout(() => {
+                        if (item.style.opacity === '0') {
+                            item.style.display = 'none';
+                            item.classList.add('hide');
+                        }
+                    }, 400); // Wait for transition
+                }
+            }
+        });
+
+        if (loadMoreBtn) {
+            if (filterValue === 'all') {
+                if (currentVisibleCategoryIndex < allCategoriesSequence.length - 1) {
+                    loadMoreBtn.style.display = 'inline-block';
+                } else {
+                    loadMoreBtn.style.display = 'none';
+                }
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
+        }
+    }
 
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -129,28 +268,27 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('active');
 
             const filterValue = btn.getAttribute('data-filter');
+            
+            if (filterValue === 'all') {
+                currentVisibleCategoryIndex = 0;
+            }
 
-            galleryItems.forEach(item => {
-                // Since we are using masonry (column-count), setting `display: none` can break the columns.
-                // We will use inline-block or block depending on if we want to show/hide.
-                if (filterValue === 'all' || item.getAttribute('data-category') === filterValue) {
-                    item.classList.remove('hide');
-                    item.style.display = 'block'; // Or inline-block if needed. For Masonry block is fine.
-                    setTimeout(() => {
-                        item.style.opacity = '1';
-                        item.style.transform = 'scale(1)';
-                    }, 50);
-                } else {
-                    item.style.opacity = '0';
-                    item.style.transform = 'scale(0.8)';
-                    setTimeout(() => {
-                        item.style.display = 'none';
-                        item.classList.add('hide');
-                    }, 400); // Wait for transition
-                }
-            });
+            applyFilter(filterValue);
         });
     });
+
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentVisibleCategoryIndex < allCategoriesSequence.length - 1) {
+                currentVisibleCategoryIndex++;
+                applyFilter('all');
+            }
+        });
+    }
+
+    // Initial filter application
+    applyFilter('all', true);
 
     /* ==========================================
        6. Lightbox Functionality
@@ -238,21 +376,54 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /* ==========================================
-       7. Contact Form Handling
+       7. Contact Form Handling (Firebase + WhatsApp)
        ========================================== */
     const contactForm = document.getElementById('contact-form');
     if (contactForm) {
-        contactForm.addEventListener('submit', (e) => {
+        contactForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
             const btn = contactForm.querySelector('button[type="submit"]');
             const originalText = btn.innerText;
+            
+            // Get form values
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const service = document.getElementById('service').value;
+            const message = document.getElementById('message').value;
 
-            btn.innerText = 'Sending...';
+            btn.innerText = 'Processing...';
             btn.disabled = true;
 
-            // Simulate sending message
-            setTimeout(() => {
-                btn.innerText = 'Message Sent!';
+            try {
+                // 1. Save to Firebase Firestore (if available)
+                if (window.firebaseDB && window.firebaseCollection && window.firebaseAddDoc) {
+                    await window.firebaseAddDoc(window.firebaseCollection(window.firebaseDB, "inquiries"), {
+                        name: name,
+                        email: email,
+                        service: service,
+                        message: message,
+                        timestamp: new Date()
+                    });
+                    console.log("Inquiry saved to Firebase Firestore.");
+                } else {
+                    console.warn("Firebase not fully loaded yet, proceeding to WhatsApp anyway.");
+                }
+
+                // 2. Redirect to WhatsApp
+                // Construct the text payload for WhatsApp
+                const whatsappNumber = "919080482374";
+                const waMessage = `Hi Flawless Photography! ✨\n\nI am interested in your services.\n\n*Name:* ${name}\n*Email:* ${email}\n*Service Interested in:* ${service}\n\n*Message:*\n${message}`;
+                
+                // Encode the message to be URL-safe
+                const encodedMessage = encodeURIComponent(waMessage);
+                const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+
+                // Open WhatsApp in a new tab
+                window.open(whatsappUrl, '_blank');
+
+                // 3. Update the button temporarily before resetting
+                btn.innerText = 'Redirecting to WhatsApp...';
                 btn.classList.add('success');
                 contactForm.reset();
 
@@ -261,7 +432,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     btn.classList.remove('success');
                     btn.disabled = false;
                 }, 3000);
-            }, 1500);
+
+            } catch (error) {
+                console.error("Error processing form:", error);
+                btn.innerText = 'Error! Try Again';
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }, 3000);
+            }
         });
     }
 
