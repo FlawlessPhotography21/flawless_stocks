@@ -476,13 +476,38 @@ button {
    7. PORTFOLIO GALLERY
    ========================================================================= */
 .gallery-filters {
+    position: sticky;
+    top: 90px;
+
     display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
     gap: 1rem;
-    margin-bottom: 3rem;
+
+    padding: 12px 20px;
+    width: fit-content;
+    margin: auto;
+
+    backdrop-filter: blur(18px) saturate(180%);
+    background: rgba(0,0,0,0.45);
+
+    border-radius: 40px;
+    border: 1px solid rgba(255,255,255,0.15);
+
+    transition: all 0.35s ease;
+
+    z-index: 100;
 }
 
+.gallery-filters.sticky-active {
+    backdrop-filter: blur(25px) saturate(200%);
+    transform: scale(0.95);
+}
+
+.gallery-filters:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 12px 40px rgba(0,0,0,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.2);
+}
 .filter-btn {
     padding: 0.5rem 1.5rem;
     border-radius: 30px;
@@ -490,13 +515,31 @@ button {
     font-weight: 500;
     color: var(--text-main);
     background-color: transparent;
-    transition: var(--transition);
+    transition: all 0.25s ease;
 }
 
 .filter-btn:hover,
 .filter-btn.active {
     background-color: var(--accent);
     color: #ffffff;
+}
+.filter-btn.active {
+    background: var(--accent);
+    color: white;
+    transform: scale(1.05);
+
+    box-shadow:
+        0 0 12px rgba(225,29,46,0.6);
+}
+.gallery-item {
+    transition:
+        opacity 0.4s ease,
+        transform 0.4s ease;
+}
+
+.gallery-item.hide {
+    opacity: 0;
+    transform: scale(0.9);
 }
 
 .gallery-grid {
